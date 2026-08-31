@@ -199,3 +199,145 @@ validate_timestamps(silver)
 # META   "language": "python",
 # META   "language_group": "synapse_pyspark"
 # META }
+
+# CELL ********************
+
+SILVER_COLUMNS = [
+    # --- date and flight identity ---
+    F.col("FlightDate").alias("flight_date"),
+    F.date_format("FlightDate", "yyyyMMdd").cast("int").alias("date_key"),
+    F.col("Reporting_Airline").alias("carrier_code"),
+    F.col("DOT_ID_Reporting_Airline").cast("int").alias("carrier_dot_id"),
+    F.col("IATA_CODE_Reporting_Airline").alias("carrier_iata_code"),
+    F.col("Tail_Number").alias("tail_number"),
+    F.col("Flight_Number_Reporting_Airline").cast("int").alias("flight_number"),
+
+    # --- origin ---
+    F.col("OriginAirportID").cast("int").alias("origin_airport_id"),
+    F.col("OriginAirportSeqID").cast("int").alias("origin_airport_seq_id"),
+    F.col("OriginCityMarketID").cast("int").alias("origin_city_market_id"),
+    F.col("Origin").alias("origin_code"),
+    F.col("OriginCityName").alias("origin_city_name"),
+    F.col("OriginState").alias("origin_state_abbr"),
+    F.col("OriginStateName").alias("origin_state_name"),
+
+    # --- destination ---
+    F.col("DestAirportID").cast("int").alias("dest_airport_id"),
+    F.col("DestAirportSeqID").cast("int").alias("dest_airport_seq_id"),
+    F.col("DestCityMarketID").cast("int").alias("dest_city_market_id"),
+    F.col("Dest").alias("dest_code"),
+    F.col("DestCityName").alias("dest_city_name"),
+    F.col("DestState").alias("dest_state_abbr"),
+    F.col("DestStateName").alias("dest_state_name"),
+
+    # --- timestamps (derived) ---
+    F.col("crs_dep_ts"),
+    F.col("dep_ts"),
+    F.col("wheels_off_ts"),
+    F.col("wheels_on_ts"),
+    F.col("crs_arr_ts"),
+    F.col("arr_ts"),
+
+    # --- raw hhmm retained for traceability ---
+    F.col("CRSDepTime").cast("int").alias("crs_dep_time_hhmm"),
+    F.col("DepTime").cast("int").alias("dep_time_hhmm"),
+    F.col("CRSArrTime").cast("int").alias("crs_arr_time_hhmm"),
+    F.col("ArrTime").cast("int").alias("arr_time_hhmm"),
+    F.col("DepTimeBlk").alias("dep_time_block"),
+    F.col("ArrTimeBlk").alias("arr_time_block"),
+
+    # --- delay measures ---
+    F.col("DepDelay").alias("dep_delay"),
+    F.col("DepDelayMinutes").alias("dep_delay_minutes"),
+    F.col("DepDel15").alias("dep_del15"),
+    F.col("ArrDelay").alias("arr_delay"),
+    F.col("ArrDelayMinutes").alias("arr_delay_minutes"),
+    F.col("ArrDel15").alias("arr_del15"),
+    F.col("TaxiOut").alias("taxi_out"),
+    F.col("TaxiIn").alias("taxi_in"),
+
+    # --- duration and distance ---
+    F.col("CRSElapsedTime").alias("crs_elapsed_time"),
+    F.col("ActualElapsedTime").alias("actual_elapsed_time"),
+    F.col("AirTime").alias("air_time"),
+    F.col("Distance").alias("distance"),
+
+    # --- status ---
+    F.col("Cancelled").alias("cancelled"),
+    F.col("CancellationCode").alias("cancellation_code"),
+    F.col("Diverted").alias("diverted"),
+    F.col("DivAirportLandings").alias("div_airport_landings"),
+
+    # --- delay causes (null unless ArrDel15 = 1 - not coalesced) ---
+    F.col("CarrierDelay").alias("carrier_delay"),
+    F.col("WeatherDelay").alias("weather_delay"),
+    F.col("NASDelay").alias("nas_delay"),
+    F.col("SecurityDelay").alias("security_delay"),
+    F.col("LateAircraftDelay").alias("late_aircraft_delay"),
+
+    # --- audit ---
+    F.col("_ingest_timestamp"),
+    F.col("_source_file"),
+]
+
+silver = silver.select(*SILVER_COLUMNS)
+
+print("silver columns:", len(silver.columns))
+print()
+for c in silver.columns:
+    print(" ", c)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+BUSINESS_KEY = ["flight_date", "carrier_code", "flight_number",
+                "origin_airport_id", "dest_airport_id", "crs_dep_time_hhmm"]
+
+total  = silver.count()
+unique = silver.select(*BUSINESS_KEY).distinct().count()
+
+print("rows           :", total)
+print("distinct keys  :", unique)
+print("duplicates     :", total - unique)
+
+if total != unique:
+    print()
+    print("--- sample duplicate keys ---")
+    dupes = (silver.groupBy(*BUSINESS_KEY)
+                   .count()
+                   .filter(F.col("count") > 1)
+                   .orderBy(F.desc("count")))
+    dupes.show(5, truncate=False)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+(silver.write
+   .mode("overwrite")
+   .format("delta")
+   .saveAsTable(SILVER_TABLE))
+
+s = spark.table(SILVER_TABLE)
+print("rows   :", s.count())
+print("columns:", len(s.columns))
+
+s.groupBy("_source_file").count().orderBy("_source_file").show()
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
