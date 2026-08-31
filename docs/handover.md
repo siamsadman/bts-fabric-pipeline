@@ -1,8 +1,8 @@
 # Fabric Portfolio Project — Handover
 
-**Status:** Landing, bronze, silver and gold built and validated against a three-month development slice. Orchestration pipeline, backfill, semantic model and README outstanding.
+**Status:** All four medallion layers built and validated. Ingest pipeline runs end to end. Backfill loop built, not yet run. Semantic model, report page and README outstanding.
 **Owner:** Siam Sadman
-**Last updated:** 31 Aug 2026
+**Last updated:** 31 Aug 2026 (late session)
 
 ---
 
@@ -53,7 +53,7 @@ Rejected alternatives:
 | **Bronze** | `bronze_flights` — Delta append with explicit schema, `_ingest_timestamp`, `_source_file`. No cleaning. | Built |
 | **Silver** | `silver_flights` — cleaned, typed, 56 columns. `MERGE INTO` upsert against a watermark table. | Built |
 | **Gold** | Star schema — two facts, five dimensions. | Built |
-| **Orchestration** | Data Factory pipeline running the notebooks in sequence, parameterised by period, with watermark lookup, failure path, and schedule. | **Outstanding** |
+| **Orchestration** | `pl_bts_ingest` — four notebook activities chained on success, parameterised by period. `pl_bts_backfill` — ForEach loop invoking it per period. | Built; watermark-driven period selection and schedule still outstanding |
 | **Semantic model** | Direct Lake over gold. Handful of measures, one report page. Do not rebuild nine pages — report skill is already proven elsewhere. | **Outstanding** |
 
 One lakehouse (`lh_bts`) for all layers, **not** three. Three would mean cross-lakehouse references in every notebook for no architectural gain at this scale. Layer separation is by table naming prefix.
@@ -276,6 +276,8 @@ The gold facts use `date_key` in place of `flight_date`; `fact_delay_attribution
 
 **Idempotency proven**, not asserted: re-running June 2023 through the full silver notebook left `silver_flights` at exactly 1,497,990 rows, all three file counts unchanged, and the watermark at three rows. Screenshot before and after.
 
+**Bronze is idempotent too, by delete-then-append.** The first pipeline run duplicated January because `load_bronze` appended unconditionally. It now deletes rows matching `_source_file` before appending and returns a `replaced` count. Bronze preserves the source shape and so has no reliable business key to merge on — `_source_file` is the natural unit of reload, which is what that audit column is for.
+
 ### Backfill
 
 **Range: January 2020 through May 2026.** 77 months. All 77 zips validated locally — correct count, none undersized, all structurally valid, **full CRC deep check passed**. Actual total **1.92 GB**, not the 2.3 GB previously estimated; the difference is the 2020 collapse months, which are markedly smaller (April 2020 is 12.28 MB against a 27.12 MB median).
@@ -293,6 +295,50 @@ Validation script: `scripts/Verify-BtsZips.ps1`. Run `-DeepCheck` for CRC verifi
 
 ---
 
+## Orchestration — built 31 Aug 2026
+
+### `pl_bts_ingest` — one period
+
+Four Notebook activities chained on **success** (green), not on completion. On-completion would let a failed landing step run bronze anyway, which is how partial data gets written and reported as a success.
+
+Pipeline parameters `process_year` and `process_month` (both Int) are passed to each activity's Base parameters as `@pipeline().parameters.process_year` / `.process_month`.
+
+Measured run: landing 59s, bronze 1m53s, silver 1m22s, gold 2m25s — roughly **6.5 minutes per period**.
+
+### `pl_bts_backfill` — many periods
+
+Array parameter `periods` holding `[{"year":2020,"month":2}, ...]`, iterated by a ForEach with **Sequential ticked**. Inside, an Invoke Pipeline activity calls `pl_bts_ingest` with `@item().year` and `@item().month`, **Wait on completion** ticked.
+
+Sequential is not optional on F4: parallel iterations request concurrent Spark sessions and hit the capacity error below.
+
+Invoke Pipeline requires a **connection** even for same-workspace calls — a `Fabric Data Pipelines` connection on the organisational account, created once.
+
+At ~6.5 min/period, 74 months projects to roughly **8 hours**. Run unattended; do not sit and watch it.
+
+### Gotcha: high concurrency for pipelines is off by default
+
+Running four notebooks in sequence failed with `TooManyRequestsForCapacity`, HTTP 430, on F4. Each activity requested its own Spark session and the previous one had not fully released.
+
+**Session tags alone do not fix this.** The tag is the mechanism, but it is ignored for pipelines unless *Workspace settings → Spark settings → High concurrency → **For pipeline running multiple notebooks*** is enabled. It is **off by default**, while the equivalent toggle for interactive notebooks is on.
+
+With the toggle on and all four activities sharing session tag `bts_pipeline`, the pipeline runs in one Spark application and succeeds.
+
+The Starter Pool is fine and should not be replaced. It is pre-warmed, so sessions start in 15–20 seconds against two to three minutes for a custom pool. The problem was session count, not node size.
+
+### Gotcha: a parameter cell must be *toggled*, not merely present
+
+A cell containing `process_year = 2020` does nothing unless it is toggled via the cell's `...` menu → **Toggle parameter cell**. Untoggled, the pipeline's values are silently ignored and the notebook runs its defaults.
+
+This bit twice. `nb_01` and `nb_02` were left untoggled and additionally still contained hard-coded development calls (`fetch_month(2020, 1)`, a loop over the three dev months), so every pipeline invocation reprocessed January regardless of the period passed.
+
+**The failure surfaced two activities downstream**, as `no bronze rows for 2020_02.csv` raised by silver's zero-row guard — not at the point of the mistake. Worth a README sentence: the guard converted a silent misconfiguration into a named, actionable error.
+
+### Data skew warnings are usually noise
+
+Fabric surfaces a "Data skew" diagnostic prominently. Bronze shows a 19.66 MB largest partition against a 4.94 MB average — a ratio of 1.73, which is inherent to flight data clustering by date and carrier. Skew matters at 10x or 100x, when one task runs for minutes while the rest finish in seconds. Do not repartition speculatively.
+
+---
+
 ## Evidence checklist
 
 Fabric Git sync does not capture table contents, so these screenshots are the only proof once capacity expires. Store in `docs/`.
@@ -305,6 +351,9 @@ Captured or to capture:
 - [ ] `nb_03` validation gate output — both timestamp checks passing
 - [ ] `nb_04` full verification block — table counts, period breakdown, five zero-orphan integrity checks
 - [ ] Watermark table before and after the incremental run of 2026_6
+- [ ] `pl_bts_ingest` canvas showing the four chained activities
+- [ ] Pipeline Output tab with all four activities succeeded and their durations
+- [ ] `pl_bts_backfill` ForEach with the Invoke Pipeline activity inside
 - [ ] Pipeline run history in the Monitoring hub
 - [ ] Direct Lake semantic model and the report page
 
@@ -312,13 +361,14 @@ Captured or to capture:
 
 ## Remaining work
 
-1. **Data Factory pipeline.** Chain the four notebooks, parameterised by period, with watermark lookup, failure path, and schedule. Test sequential loading with two adjacent months.
-2. **Full backfill.** 74 remaining months. Projects to ~68 minutes of fetch plus transform time. Run as a background pipeline execution.
+1. **Re-run `pl_bts_backfill`** with the three test periods `2020-02, 2020-03, 2020-05`. The first attempt failed on untoggled parameter cells, now fixed, so the loop itself is unproven end to end. 2020-02 into 2020-03 is also the consecutive-period test the development slice cannot provide.
+2. **Full backfill.** 74 remaining months. At ~6.5 minutes per period this is roughly **8 hours** — start it and leave it. Consider whether to add retries on the notebook activities first, since one transient failure currently stops the whole loop.
 3. **Load 2026_6** as the live incremental demonstration.
-4. **Semantic model.** Direct Lake over gold. Two relationships to `dim_airport` (active origin, inactive destination) with `USERELATIONSHIP` measures.
-5. **Report scope — still open.** One page, no more. Candidate: carrier on-time performance with delay-cause breakdown and route-level drill, with the 2020 collapse and recovery as the narrative spine.
-6. **README** with architecture diagram, the decisions above, and the measured figures.
-7. **Consolidate `nb_01` and `nb_02`** if time allows — both are currently clean but were built incrementally.
+4. **Watermark-driven period selection.** The pipeline currently takes an explicit period. A Lookup activity against `load_watermark` returning the next unprocessed period would make the schedule meaningful and is the better story. Not required for the backfill.
+5. **Semantic model.** Direct Lake over gold. Two relationships to `dim_airport` (active origin, inactive destination) with `USERELATIONSHIP` measures.
+6. **Report scope — still open.** One page, no more. Candidate: carrier on-time performance with delay-cause breakdown and route-level drill, with the 2020 collapse and recovery as the narrative spine.
+7. **README** with architecture diagram, the decisions above, and the measured figures.
+8. **Notebook consolidation is done.** All five notebooks now open with a markdown header explaining the layer's decisions, followed by a toggled parameter cell. `nb_00` states explicitly that it is a decision record and not part of the pipeline, so a reviewer does not read it as dead code.
 
 ---
 
