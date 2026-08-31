@@ -9,10 +9,36 @@
 # META   "dependencies": {}
 # META }
 
-# CELL ********************
+# MARKDOWN ********************
 
-# Welcome to your new notebook
-# Type here in the cell editor to add code!
+# # Connectivity test
+# 
+# One-off check, run before the ingestion approach was decided: can a Fabric
+# notebook reach transtats.bts.gov directly?
+# 
+# If yes, files are fetched server-side at datacentre bandwidth and ingestion
+# becomes a genuine pipeline step. If no, the fallback was uploading ~1.9 GB
+# of local zips through OneLake File Explorer — slow, and a manual step that
+# would have to be repeated for every future month.
+# 
+# ## Result — 31 Aug 2026
+# 
+# Reachable. Status 200, `application/x-zip-compressed`, 30.25 MB, magic bytes
+# `PK\x03\x04`. No redirect occurs on the PREZIP path.
+# 
+# The TranStats certificate chain fails validation in most HTTP clients, so
+# `verify=False` is required.
+# 
+# **Why the magic-byte check matters:** TranStats returns HTTP 200 with an HTML
+# page for URLs it does not recognise, so a status code alone proves nothing.
+# Two separate failures during this build returned 200 with HTML bodies. Assert
+# on content, not status.
+# 
+# This notebook is not part of the pipeline. It is kept as the record of a
+# decision.
+
+
+# CELL ********************
 
 import requests
 
