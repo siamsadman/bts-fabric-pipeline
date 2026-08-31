@@ -1,0 +1,16 @@
+# Local raw data - never commit
+RAW_zips/
+*.zip
+
+# Validation output
+zip_validation.csv
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS noise
+Thumbs.db
+.DS_Store
