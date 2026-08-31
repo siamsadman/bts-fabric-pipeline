@@ -232,27 +232,44 @@ print("--- city markets with multiple airports ---")
 
 def build_dim_carrier(df):
     """
-    Carrier dimension from the reporting airline fields in silver.
+    Carrier dimension from silver, enriched with airline names from the BTS
+    L_AIRLINE_ID lookup landed under Files/landing/reference/.
 
-    The on-time table carries only the code, not the airline name. Names come
-    from the BTS lookup tables and are joined in a later step.
+    Joined on the DOT ID rather than the carrier code: BTS defines a unique
+    airline by its DOT certificate regardless of code, name, or holding company,
+    and reuses codes across carriers over time (PA, PA(1), PA(2)).
 
-    Carrier codes are reused over time; the most recent attributes win.
+    L_AIRLINE_ID descriptions embed the code after a colon, e.g.
+    "Southwest Airlines Co.: WN" - split and keep the name.
     """
     w = Window.partitionBy("carrier_code").orderBy(F.col("flight_date").desc())
 
-    return (df
+    carriers = (df
         .select("carrier_code", "carrier_dot_id", "carrier_iata_code", "flight_date")
         .withColumn("rn", F.row_number().over(w))
         .filter(F.col("rn") == 1)
         .drop("rn", "flight_date"))
 
+    lookup = (spark.read
+        .option("header", "true")
+        .csv("Files/landing/reference/L_AIRLINE_ID.csv")
+        .select(
+            F.col("Code").cast("int").alias("dot_id"),
+            F.split(F.col("Description"), ":").getItem(0).alias("carrier_name"),
+        ))
+
+    return (carriers
+        .join(lookup, carriers.carrier_dot_id == lookup.dot_id, "left")
+        .drop("dot_id")
+        .select("carrier_code", "carrier_dot_id", "carrier_iata_code", "carrier_name"))
+
 
 dim_carrier = build_dim_carrier(silver)
-dim_carrier.write.mode("overwrite").format("delta").saveAsTable("dim_carrier")
+dim_carrier.write.mode("overwrite").option("overwriteSchema", "true").format("delta").saveAsTable("dim_carrier")
 
-print("rows:", spark.table("dim_carrier").count())
-spark.table("dim_carrier").orderBy("carrier_code").show(30, truncate=False)
+print("rows        :", spark.table("dim_carrier").count())
+print("missing name:", spark.table("dim_carrier").filter(F.col("carrier_name").isNull()).count())
+spark.table("dim_carrier").orderBy("carrier_code").show(20, truncate=False)
 
 # METADATA ********************
 
