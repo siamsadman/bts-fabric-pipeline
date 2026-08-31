@@ -53,7 +53,7 @@
 # `_source_file` is the natural unit of reload.
 
 
-# CELL ********************
+# PARAMETERS CELL ********************
 
 # Default values, overridden by the pipeline at runtime
 process_year  = 2020
