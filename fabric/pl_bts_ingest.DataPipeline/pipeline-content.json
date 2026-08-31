@@ -1,0 +1,169 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "80f95933-e3c1-bffb-409f-751d28190d3c",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "process_year": {
+              "value": {
+                "value": "@pipeline().parameters.process_year",
+                "type": "Expression"
+              },
+              "type": "int"
+            },
+            "process_month": {
+              "value": {
+                "value": "@pipeline().parameters.process_month",
+                "type": "Expression"
+              },
+              "type": "int"
+            }
+          },
+          "sessionTag": "bts_pipeline"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "01 Landing Fetch",
+        "dependsOn": []
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "3e4ab7c0-9984-a497-4a22-12be8c64adbb",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "process_year": {
+              "value": {
+                "value": "@pipeline().parameters.process_year",
+                "type": "Expression"
+              },
+              "type": "int"
+            },
+            "process_month": {
+              "value": {
+                "value": "@pipeline().parameters.process_month",
+                "type": "Expression"
+              },
+              "type": "int"
+            }
+          },
+          "sessionTag": "bts_pipeline"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "02 Bronze Ingest",
+        "dependsOn": [
+          {
+            "activity": "01 Landing Fetch",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "5bba633b-a391-baa0-4a5e-d8ee42763c1c",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "process_year": {
+              "value": {
+                "value": "@pipeline().parameters.process_year",
+                "type": "Expression"
+              },
+              "type": "int"
+            },
+            "process_month": {
+              "value": {
+                "value": "@pipeline().parameters.process_month",
+                "type": "Expression"
+              },
+              "type": "int"
+            }
+          },
+          "sessionTag": "bts_pipeline"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "03 Silver Transform",
+        "dependsOn": [
+          {
+            "activity": "02 Bronze Ingest",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "f800a1af-4dff-93a7-4b72-2e0d03b751cb",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "process_year": {
+              "value": {
+                "value": "@pipeline().parameters.process_year",
+                "type": "Expression"
+              },
+              "type": "int"
+            },
+            "process_month": {
+              "value": {
+                "value": "@pipeline().parameters.process_month",
+                "type": "Expression"
+              },
+              "type": "int"
+            }
+          },
+          "sessionTag": "bts_pipeline"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "04 Gold Build",
+        "dependsOn": [
+          {
+            "activity": "03 Silver Transform",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      }
+    ],
+    "parameters": {
+      "process_year": {
+        "type": "int",
+        "defaultValue": 2020
+      },
+      "process_month": {
+        "type": "int",
+        "defaultValue": 1
+      }
+    }
+  }
+}
