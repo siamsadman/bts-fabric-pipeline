@@ -52,17 +52,38 @@
 # destination-local date.
 
 
+# PARAMETERS CELL ********************
+
+# Default values, overridden by the pipeline at runtime
+process_year  = 2023
+process_month = 6
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
 # CELL ********************
 
 from pyspark.sql import functions as F
 
 BRONZE_TABLE = "bronze_flights"
 SILVER_TABLE = "silver_flights"
+WATERMARK_TABLE = "load_watermark"
 
-bronze = spark.table(BRONZE_TABLE)
+source_file = f"{process_year}_{process_month:02d}.csv"
 
-print("bronze rows   :", bronze.count())
-print("bronze columns:", len(bronze.columns))
+bronze = spark.table(BRONZE_TABLE).filter(F.col("_source_file") == source_file)
+
+print("processing     :", f"{process_year}-{process_month:02d}")
+print("source file    :", source_file)
+print("bronze rows    :", bronze.count())
+print("bronze columns :", len(bronze.columns))
+
+if bronze.count() == 0:
+    raise ValueError(f"no bronze rows for {source_file} - has it been ingested?")
 
 # METADATA ********************
 
@@ -324,16 +345,107 @@ if total != unique:
 
 # CELL ********************
 
-(silver.write
-   .mode("overwrite")
-   .format("delta")
-   .saveAsTable(SILVER_TABLE))
+from delta.tables import DeltaTable
+
+def ensure_watermark_table():
+    """Create the watermark table on first run. Safe to call repeatedly."""
+    if not spark.catalog.tableExists(WATERMARK_TABLE):
+        schema = """
+            year INT,
+            month INT,
+            source_file STRING,
+            row_count BIGINT,
+            status STRING,
+            loaded_at TIMESTAMP
+        """
+        spark.sql(f"CREATE TABLE {WATERMARK_TABLE} ({schema}) USING DELTA")
+        print(f"created {WATERMARK_TABLE}")
+    else:
+        print(f"{WATERMARK_TABLE} exists")
+
+ensure_watermark_table()
+spark.table(WATERMARK_TABLE).show()
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+BUSINESS_KEY = ["flight_date", "carrier_code", "flight_number",
+                "origin_airport_id", "dest_airport_id", "crs_dep_time_hhmm"]
+
+
+def merge_silver(df):
+    """
+    Upsert a period into silver on the business key.
+    Creates the table on first run; merges thereafter.
+    Re-running the same period updates in place rather than duplicating.
+    """
+    if not spark.catalog.tableExists(SILVER_TABLE):
+        df.write.format("delta").saveAsTable(SILVER_TABLE)
+        return {"action": "created", "rows": df.count()}
+
+    target = DeltaTable.forName(spark, SILVER_TABLE)
+    condition = " AND ".join([f"t.{c} <=> s.{c}" for c in BUSINESS_KEY])
+
+    (target.alias("t")
+           .merge(df.alias("s"), condition)
+           .whenMatchedUpdateAll()
+           .whenNotMatchedInsertAll()
+           .execute())
+
+    return {"action": "merged", "rows": df.count()}
+
+
+result = merge_silver(silver)
+print(result)
 
 s = spark.table(SILVER_TABLE)
-print("rows   :", s.count())
-print("columns:", len(s.columns))
-
+print("silver total rows:", s.count())
 s.groupBy("_source_file").count().orderBy("_source_file").show()
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+def record_watermark(year, month, source_file, row_count, status="success"):
+    """Upsert the load record for a period."""
+    row = spark.createDataFrame(
+        [(year, month, source_file, row_count, status)],
+        "year INT, month INT, source_file STRING, row_count BIGINT, status STRING"
+    ).withColumn("loaded_at", F.current_timestamp())
+
+    target = DeltaTable.forName(spark, WATERMARK_TABLE)
+    (target.alias("t")
+           .merge(row.alias("s"), "t.year = s.year AND t.month = s.month")
+           .whenMatchedUpdateAll()
+           .whenNotMatchedInsertAll()
+           .execute())
+
+
+record_watermark(process_year, process_month, source_file, result["rows"])
+
+spark.table(WATERMARK_TABLE).orderBy("year", "month").show()
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+spark.table(SILVER_TABLE).groupBy("_source_file").count().orderBy("_source_file").show()
 
 # METADATA ********************
 
