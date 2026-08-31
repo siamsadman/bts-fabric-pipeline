@@ -140,3 +140,71 @@ print("total MB:", round(sum(os.path.getsize(f"{LANDING}/{f}") for f in os.listd
 # META   "language": "python",
 # META   "language_group": "synapse_pyspark"
 # META }
+
+# CELL ********************
+
+LOOKUPS = {
+    "L_UNIQUE_CARRIERS": "https://www.transtats.bts.gov/Download_Lookup.asp?Y11x72=Y_haVdhR_PNeeVRef",
+    "L_AIRLINE_ID":      "https://www.transtats.bts.gov/Download_Lookup.asp?Y11x72=Y_NVeYVaR_VQ",
+}
+
+for name, url in LOOKUPS.items():
+    r = requests.get(url, verify=False, timeout=60, allow_redirects=True)
+    head = r.content[:120].decode("utf-8", errors="replace").replace("\n", " | ")
+    print(f"{name}")
+    print("  status      :", r.status_code)
+    print("  content-type:", r.headers.get("Content-Type"))
+    print("  size (KB)   :", round(len(r.content) / 1024, 1))
+    print("  first bytes :", head)
+    print()
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+REFERENCE = "/lakehouse/default/Files/landing/reference"
+os.makedirs(REFERENCE, exist_ok=True)
+
+# TranStats obfuscates its query-string parameters, so these URLs are captured
+# constants rather than constructed. Sourced from the "Get Lookup Table" links
+# on the Reporting Carrier On-Time Performance field-selection page.
+LOOKUPS = {
+    "L_UNIQUE_CARRIERS": "https://www.transtats.bts.gov/Download_Lookup.asp?Y11x72=Y_haVdhR_PNeeVRef",
+    "L_AIRLINE_ID":      "https://www.transtats.bts.gov/Download_Lookup.asp?Y11x72=Y_NVeYVaR_VQ",
+}
+
+
+def fetch_lookup(name, overwrite=True):
+    """Download a BTS lookup table into the reference landing folder."""
+    target = f"{REFERENCE}/{name}.csv"
+
+    if os.path.exists(target) and not overwrite:
+        return {"table": name, "status": "skipped"}
+
+    r = requests.get(LOOKUPS[name], verify=False, timeout=120)
+    r.raise_for_status()
+
+    if not r.content.lstrip()[:4] == b"Code":
+        raise ValueError(f"{name}: expected CSV, got {r.content[:60]!r}")
+
+    with open(target, "wb") as f:
+        f.write(r.content)
+
+    return {"table": name, "status": "landed",
+            "kb": round(os.path.getsize(target) / 1024, 1)}
+
+
+for name in LOOKUPS:
+    print(fetch_lookup(name))
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
