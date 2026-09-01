@@ -1,8 +1,8 @@
 # Fabric Portfolio Project — Handover
 
-**Status:** All four medallion layers built and validated. Ingest pipeline runs end to end. Backfill loop built, not yet run. Semantic model, report page and README outstanding.
+**Status:** Full backfill complete — 77 periods, 41.2M rows, all integrity checks passing. Semantic model and report page built. README drafted, needs updating with full-dataset figures. Screenshots outstanding.
 **Owner:** Siam Sadman
-**Last updated:** 31 Aug 2026 (late session)
+**Last updated:** 1 Sep 2026
 
 ---
 
@@ -54,7 +54,8 @@ Rejected alternatives:
 | **Silver** | `silver_flights` — cleaned, typed, 56 columns. `MERGE INTO` upsert against a watermark table. | Built |
 | **Gold** | Star schema — two facts, five dimensions. | Built |
 | **Orchestration** | `pl_bts_ingest` — four notebook activities chained on success, parameterised by period. `pl_bts_backfill` — ForEach loop invoking it per period. | Built; watermark-driven period selection and schedule still outstanding |
-| **Semantic model** | Direct Lake over gold. Handful of measures, one report page. Do not rebuild nine pages — report skill is already proven elsewhere. | **Outstanding** |
+| **Semantic model** | `sm_bts_ontime` — Direct Lake over gold, 11 measures on a dedicated `_measures` table, 7 relationships. | Built |
+| **Report** | `rpt_bts_ontime` — one page: KPI cards, on-time/cancellation trend, carrier comparison, delay attribution. | Built; needs slicer default and label fixes |
 
 One lakehouse (`lh_bts`) for all layers, **not** three. Three would mean cross-lakehouse references in every notebook for no architectural gain at this scale. Layer separation is by table naming prefix.
 
@@ -278,7 +279,50 @@ The gold facts use `date_key` in place of `flight_date`; `fact_delay_attribution
 
 **Bronze is idempotent too, by delete-then-append.** The first pipeline run duplicated January because `load_bronze` appended unconditionally. It now deletes rows matching `_source_file` before appending and returns a `replaced` count. Bronze preserves the source shape and so has no reliable business key to merge on — `_source_file` is the natural unit of reload, which is what that audit column is for.
 
-### Backfill
+### Backfill — completed 1 Sep 2026
+
+**Ran 12:32 to 19:39, 7 hours 6 minutes, 71 periods, zero failures.** Retries were configured (2 attempts, 120s interval) but never fired. Cadence held at 5–6.5 minutes per period throughout, drifting slightly slower over time as the silver merge target grew.
+
+**Final state, measured:**
+
+| Table | Rows |
+|---|---|
+| `bronze_flights` | 41,222,251 |
+| `silver_flights` | 41,222,251 |
+| `fact_flight` | 41,222,251 |
+| `fact_delay_attribution` | 12,438,937 |
+| `dim_airport` | 386 |
+| `dim_carrier` | 18 |
+| `dim_date` | 2,953 |
+| `load_watermark` | 77 |
+
+Identical counts across bronze, silver and fact — no drift through the chain. Referential integrity: zero orphans on all five relationships across the full 41.2M rows.
+
+`dim_airport` grew 367 → 386 and `dim_carrier` 17 → 18 (Horizon Air, `QX`) over the three-month slice. The full-rebuild-every-run decision handled these late-arriving members with no special casing.
+
+**IATA reuse check:** 386 distinct `airport_id`, 386 distinct `airport_code` — no collisions across six and a half years. The check stays as a gate, but the honest README wording is that keying on `airport_id` is defensive against documented BTS behaviour, not that reuse was found and handled.
+
+**Delay attribution across the full dataset:**
+
+| Cause | Rows | Avg min | Total min |
+|---|---|---|---|
+| Late aircraft | 3,816,081 | 54.2 | 206.9M |
+| Carrier | 4,363,942 | 45.2 | 197.3M |
+| NAS | 3,753,525 | 27.3 | 102.5M |
+| Weather | 465,337 | 70.3 | 32.7M |
+| Security | 40,052 | 27.3 | 1.1M |
+
+Late aircraft leads on total minutes despite fewer occurrences than carrier delay — the cascade effect. Weather is rarest and most severe per occurrence.
+
+**Monthly volume shows the collapse clearly:** 648,229 (Mar 2020) → 180,617 (May 2020) → 634,613 (Jul 2024).
+
+### Incremental demonstration
+
+**2026-06 loaded 1 Sep via `pl_bts_ingest`, 8m29s.** Watermark 77 → 78 periods, `fact_flight` 41,222,251 → 41,829,828, delta exactly matching June's 607,577 rows. Before and after screenshots taken.
+
+**2026-07 is not yet published.** The fetch returned 404 from the PREZIP path. `raise_for_status()` caught it, landing failed, and the on-success chaining meant bronze, silver and gold never ran — a clean demonstration of the failure path, worth screenshotting alongside the successful run. BTS publishes with a two-to-three month lag, so **retry July in late September or October**, inside the trial window.
+
+### Original backfill notes
 
 **Range: January 2020 through May 2026.** 77 months. All 77 zips validated locally — correct count, none undersized, all structurally valid, **full CRC deep check passed**. Actual total **1.92 GB**, not the 2.3 GB previously estimated; the difference is the 2020 collapse months, which are markedly smaller (April 2020 is 12.28 MB against a 27.12 MB median).
 
@@ -339,6 +383,40 @@ Fabric surfaces a "Data skew" diagnostic prominently. Bronze shows a 19.66 MB la
 
 ---
 
+## Semantic model and report — built 1 Sep 2026
+
+### `sm_bts_ontime`
+
+Direct Lake over the seven gold tables only. Bronze, silver and `load_watermark` deliberately excluded — a semantic model is the presentation layer, and staging tables in it are working notes shipped to the customer.
+
+**Measures live on `_measures`**, a one-row Delta table created solely to hold them, with its `dummy` column hidden. Direct Lake has no equivalent of pasting a blank table in Desktop, so the table has to exist in the lakehouse. Sorts to the top of the field list.
+
+**Seven relationships**, all single-direction, all with **Assume referential integrity** ticked. That optimisation generates INNER rather than OUTER joins and is a promise, not a check — it is only safe because `nb_04`'s `left_anti` gates verify exactly these five relationships on every load and raise on failure.
+
+`dim_airport` role-plays: **active on `origin_airport_id`, inactive on `dest_airport_id`**, with `Arriving Flights` exposing the destination side via `USERELATIONSHIP`.
+
+`dim_date` marked as a date table on the `date` column, not `date_key`. Note that web modeling does **not** validate this selection — no query is issued to check the column is suitable, so a wrong choice fails silently.
+
+**The eleven measures:** `Flights`, `Cancelled Flights`, `Cancellation Rate`, `Diverted Flights`, `Completed Flights`, `On Time Flights`, `On Time Rate`, `Delayed Flights`, `Avg Arrival Delay`, `Avg Departure Delay`, `Arriving Flights`, plus `Delay Minutes` and `Attributed Delay Events` on the attribution fact.
+
+**`Completed Flights` is the important one.** It excludes cancelled and diverted flights and is the correct denominator for punctuality — a cancelled flight has no arrival time and must not dilute a delay average. `Flights` is the denominator for reliability. Conflating the two is the subtle version of the grain mistake.
+
+Delay averages use the `_minutes` variants, which floor at zero. Using `arr_delay` would let early arrivals offset late ones and produce a much lower, misleading figure.
+
+### `rpt_bts_ontime`
+
+One page: KPI card row, on-time and cancellation trend by `year_month`, carrier comparison by on-time rate, delay attribution by cause.
+
+**Outstanding fixes:**
+- Page defaults to the 2024 slicer selection, which hides the collapse-and-recovery story. Default to no year filter so the trend spans 2020–2026.
+- "Delay Casue" misspelled in the delay attribution subtitle.
+- `Avg Arrival Delay` card shows a bare number — needs a minutes unit.
+- Consider a text box noting that on-time rate *improved* through mid-2020 because an empty sky runs on schedule. Unexplained, it reads as a data error.
+
+Carrier on-time rates span roughly 73–84% — a tight spread, which is more credible than a chart with an obvious winner.
+
+---
+
 ## Evidence checklist
 
 Fabric Git sync does not capture table contents, so these screenshots are the only proof once capacity expires. Store in `docs/`.
@@ -361,14 +439,18 @@ Captured or to capture:
 
 ## Remaining work
 
-1. **Re-run `pl_bts_backfill`** with the three test periods `2020-02, 2020-03, 2020-05`. The first attempt failed on untoggled parameter cells, now fixed, so the loop itself is unproven end to end. 2020-02 into 2020-03 is also the consecutive-period test the development slice cannot provide.
-2. **Full backfill.** 74 remaining months. At ~6.5 minutes per period this is roughly **8 hours** — start it and leave it. Consider whether to add retries on the notebook activities first, since one transient failure currently stops the whole loop.
-3. **Load 2026_6** as the live incremental demonstration.
-4. **Watermark-driven period selection.** The pipeline currently takes an explicit period. A Lookup activity against `load_watermark` returning the next unprocessed period would make the schedule meaningful and is the better story. Not required for the backfill.
-5. **Semantic model.** Direct Lake over gold. Two relationships to `dim_airport` (active origin, inactive destination) with `USERELATIONSHIP` measures.
-6. **Report scope — still open.** One page, no more. Candidate: carrier on-time performance with delay-cause breakdown and route-level drill, with the 2020 collapse and recovery as the narrative spine.
-7. **README** with architecture diagram, the decisions above, and the measured figures.
-8. **Notebook consolidation is done.** All five notebooks now open with a markdown header explaining the layer's decisions, followed by a toggled parameter cell. `nb_00` states explicitly that it is a decision record and not part of the pipeline, so a reviewer does not read it as dead code.
+1. **Report page fixes.** Clear the year slicer default, correct "Delay Casue", add a minutes unit to the delay card, and add a text box explaining the mid-2020 on-time improvement.
+2. **README update.** A draft exists at the repo root but several figures are from the three-month slice and are now superseded — row counts, delay attribution totals, `dim_airport` and `dim_carrier` sizes. Add the backfill duration, the incremental demonstration, and the semantic model section.
+3. **Screenshots into `docs/`.** This is the load-bearing evidence once capacity expires on 4 Nov. See the checklist above.
+4. **Retry 2026-07** in late September or October, once BTS publishes it. A second incremental run against a period that did not exist when the pipeline was built is a stronger claim than reloading a held-back file.
+5. **Watermark-driven period selection.** The pipeline currently takes an explicit period. A Lookup activity against `load_watermark` returning the next unprocessed period would make a schedule meaningful and is the better story. Optional — the backfill did not need it.
+6. **Consider a monthly schedule** on `pl_bts_ingest` as the final proof the pipeline is operational rather than a one-off. Only worthwhile alongside item 5.
+
+### Deliberately not doing
+
+- More report pages. One is the scope; report skill is proven elsewhere in the portfolio.
+- Timezone-correct arrival timestamps. See deferred, below.
+- Landing CSV cleanup. ~20 GB sits in OneLake; bronze holds everything they contain and the local zips are the provenance copy. Harmless on trial capacity.
 
 ---
 
