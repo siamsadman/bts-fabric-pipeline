@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "DataPipeline",
+    "displayName": "pl_bts_backfill"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "6cd08f97-38fa-8e3e-412a-3a8687d05fff"
+  }
+}
