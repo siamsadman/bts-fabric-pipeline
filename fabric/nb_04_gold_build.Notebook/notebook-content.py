@@ -67,8 +67,8 @@
 # PARAMETERS CELL ********************
 
 # Default values, overridden by the pipeline at runtime
-process_year  = 2023
-process_month = 6
+process_year  = 2020
+process_month = 1
 
 # METADATA ********************
 
@@ -80,6 +80,7 @@ process_month = 6
 # CELL ********************
 
 from pyspark.sql import functions as F
+from pyspark.sql.window import Window
 from delta.tables import DeltaTable
 
 SILVER_TABLE = "silver_flights"
@@ -185,8 +186,6 @@ def build_dim_airport(df):
         .filter(F.col("rn") == 1)
         .drop("rn", "flight_date"))
 
-
-from pyspark.sql.window import Window
 
 dim_airport = build_dim_airport(silver)
 dim_airport.write.mode("overwrite").format("delta").saveAsTable("dim_airport")
@@ -487,18 +486,27 @@ print("unattributed                 :", f"{total_arr_delay - attributed:,.0f}",
 
 # CELL ********************
 
-tables = ["dim_date", "dim_airport", "dim_carrier", "dim_cancellation_code",
-          "dim_delay_cause", "fact_flight", "fact_delay_attribution"]
+src = source_file
 
-for t in tables:
+print("--- row counts ---")
+for t in ["dim_date", "dim_airport", "dim_carrier", "dim_cancellation_code",
+          "dim_delay_cause"]:
     print(f"  {t:<26} {spark.table(t).count():>10,}")
 
-print()
-print("--- fact_flight by period ---")
-spark.table("fact_flight").groupBy("_source_file").count().orderBy("_source_file").show()
+f_period = spark.table("fact_flight").filter(F.col("_source_file") == src)
+d_period = spark.table("fact_delay_attribution").filter(F.col("_source_file") == src)
 
-print("--- referential integrity ---")
-f = spark.table("fact_flight").alias("f")
+print()
+print(f"  fact_flight ({src})            {f_period.count():>10,}")
+print(f"  fact_delay_attribution         {d_period.count():>10,}")
+
+# Referential integrity, scoped to the period just loaded.
+# Dimensions are rebuilt in full every run, so a new member can only arrive
+# with new fact rows - checking those catches the same problems as a full
+# scan, at a fraction of the cost.
+print()
+print("--- referential integrity (this period) ---")
+fp = f_period.alias("f")
 
 for key, dim, dim_key in [
     ("date_key",          "dim_date",              "date_key"),
@@ -508,9 +516,11 @@ for key, dim, dim_key in [
     ("cancellation_code", "dim_cancellation_code", "cancellation_code"),
 ]:
     d = spark.table(dim).alias("d")
-    orphans = f.join(d, F.col(f"f.{key}") == F.col(f"d.{dim_key}"), "left_anti").count()
+    orphans = fp.join(d, F.col(f"f.{key}") == F.col(f"d.{dim_key}"), "left_anti").count()
     flag = "OK" if orphans == 0 else "FAIL"
     print(f"  {key:<20} -> {dim:<24} orphans: {orphans:>6}  {flag}")
+    if orphans:
+        raise ValueError(f"{orphans} orphan rows: {key} -> {dim}")
 
 # METADATA ********************
 

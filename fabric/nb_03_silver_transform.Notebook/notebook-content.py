@@ -55,8 +55,8 @@
 # PARAMETERS CELL ********************
 
 # Default values, overridden by the pipeline at runtime
-process_year  = 2023
-process_month = 6
+process_year  = 2020
+process_month = 1
 
 # METADATA ********************
 
