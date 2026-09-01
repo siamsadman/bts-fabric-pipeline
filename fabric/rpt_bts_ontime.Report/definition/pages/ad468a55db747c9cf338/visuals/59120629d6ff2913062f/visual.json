@@ -1,0 +1,168 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "59120629d6ff2913062f",
+  "position": {
+    "x": 1071.6666666666667,
+    "y": 585,
+    "z": 3001,
+    "height": 435,
+    "width": 771.66666666666674,
+    "tabOrder": 3001
+  },
+  "visual": {
+    "visualType": "barChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_delay_cause"
+                    }
+                  },
+                  "Property": "delay_cause_name"
+                }
+              },
+              "queryRef": "dim_delay_cause.delay_cause_name",
+              "nativeQueryRef": "delay_cause_name",
+              "active": true
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "dim_delay_cause"
+                        }
+                      },
+                      "Property": "sort_order"
+                    }
+                  },
+                  "Function": 1
+                }
+              },
+              "queryRef": "CountNonNull(dim_delay_cause.sort_order)",
+              "nativeQueryRef": "Average of sort_order"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_measures"
+                    }
+                  },
+                  "Property": "Delay Minutes"
+                }
+              },
+              "queryRef": "_measures.Delay Minutes",
+              "nativeQueryRef": "Delay Minutes"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Aggregation": {
+                "Expression": {
+                  "Column": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "dim_delay_cause"
+                      }
+                    },
+                    "Property": "sort_order"
+                  }
+                },
+                "Function": 1
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "border": [
+        {
+          "properties": {
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "dropShadow": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 2,
+                      "Percent": 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Delay Minutes'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "subTitle": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'by Delay Casue'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}
