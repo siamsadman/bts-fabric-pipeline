@@ -1,0 +1,98 @@
+table fact_delay_attribution
+	lineageTag: f2467f2c-d046-48b2-88b9-fca8a7b56ee8
+	sourceLineageTag: [dbo].[fact_delay_attribution]
+
+	column date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 7b9bbbb9-7a18-4731-8507-2db369231a98
+		sourceLineageTag: date_key
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column carrier_code
+		dataType: string
+		lineageTag: db1732cb-aa40-4f48-bb0c-29db32e1939c
+		sourceLineageTag: carrier_code
+		summarizeBy: none
+		sourceColumn: carrier_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column flight_number
+		dataType: int64
+		formatString: 0
+		lineageTag: 160c44ce-6cbd-4e73-a829-34a2358b56f6
+		sourceLineageTag: flight_number
+		summarizeBy: sum
+		sourceColumn: flight_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column origin_airport_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 15e1af9e-9ce4-421e-8b5c-cc345c8290a6
+		sourceLineageTag: origin_airport_id
+		summarizeBy: sum
+		sourceColumn: origin_airport_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column dest_airport_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 81329af0-045e-4da7-9c84-1c669118860f
+		sourceLineageTag: dest_airport_id
+		summarizeBy: sum
+		sourceColumn: dest_airport_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column crs_dep_time_hhmm
+		dataType: int64
+		formatString: 0
+		lineageTag: fc16fa56-d14f-4a72-b307-e7e497ec55a7
+		sourceLineageTag: crs_dep_time_hhmm
+		summarizeBy: sum
+		sourceColumn: crs_dep_time_hhmm
+
+		annotation SummarizationSetBy = Automatic
+
+	column delay_cause_key
+		dataType: string
+		lineageTag: 0ffcc772-e1b3-4117-8231-0e7d9265440d
+		sourceLineageTag: delay_cause_key
+		summarizeBy: none
+		sourceColumn: delay_cause_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column delay_minutes
+		dataType: double
+		lineageTag: c0ce156c-9032-48d6-9a11-0a8a9ddd0a65
+		sourceLineageTag: delay_minutes
+		summarizeBy: sum
+		sourceColumn: delay_minutes
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column _source_file
+		dataType: string
+		lineageTag: 0e683ecb-cc40-4d73-9d70-a34bb1469299
+		sourceLineageTag: _source_file
+		summarizeBy: none
+		sourceColumn: _source_file
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_delay_attribution = entity
+		mode: directLake
+		source
+			entityName: fact_delay_attribution
+			expressionSource: 'DirectLake - lh_bts'
+

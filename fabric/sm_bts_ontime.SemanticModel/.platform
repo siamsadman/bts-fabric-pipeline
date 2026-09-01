@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "sm_bts_ontime"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "25ffdb9e-b79c-9d36-408b-f886e0e4b13e"
+  }
+}

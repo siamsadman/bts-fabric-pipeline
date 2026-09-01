@@ -1,0 +1,339 @@
+table fact_flight
+	lineageTag: e160945d-5534-4470-83cc-c7acaf30b75c
+	sourceLineageTag: [dbo].[fact_flight]
+
+	column date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 1d964df2-f9e6-422b-affb-6fa478b34f44
+		sourceLineageTag: date_key
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column carrier_code
+		dataType: string
+		lineageTag: b6797241-1df9-4c66-9317-7d0b935533b0
+		sourceLineageTag: carrier_code
+		summarizeBy: none
+		sourceColumn: carrier_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column origin_airport_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 1deaaa74-ae6c-4a1c-b371-6c3410301dcc
+		sourceLineageTag: origin_airport_id
+		summarizeBy: none
+		sourceColumn: origin_airport_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column dest_airport_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 83fca0ff-d073-4989-a2f3-e804d8035241
+		sourceLineageTag: dest_airport_id
+		summarizeBy: sum
+		sourceColumn: dest_airport_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column cancellation_code
+		dataType: string
+		lineageTag: 8edb7b4e-015a-4dcb-9abb-7fd5e0ba8719
+		sourceLineageTag: cancellation_code
+		summarizeBy: none
+		sourceColumn: cancellation_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column tail_number
+		dataType: string
+		lineageTag: 6e5010f4-078b-418b-8c64-ec9973f9082c
+		sourceLineageTag: tail_number
+		summarizeBy: none
+		sourceColumn: tail_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column flight_number
+		dataType: int64
+		formatString: 0
+		lineageTag: 5b1cb7a6-5623-4e3f-bb13-f776cb7ae45d
+		sourceLineageTag: flight_number
+		summarizeBy: sum
+		sourceColumn: flight_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column crs_dep_ts
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: f99c7af7-471d-4034-bbc3-808c5e812ed0
+		sourceLineageTag: crs_dep_ts
+		summarizeBy: none
+		sourceColumn: crs_dep_ts
+
+		annotation SummarizationSetBy = Automatic
+
+	column dep_ts
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 547fccef-30d6-41c5-ba74-66c96d49c071
+		sourceLineageTag: dep_ts
+		summarizeBy: none
+		sourceColumn: dep_ts
+
+		annotation SummarizationSetBy = Automatic
+
+	column wheels_off_ts
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: b5d6b400-4e08-46d0-9086-2a01d64caafa
+		sourceLineageTag: wheels_off_ts
+		summarizeBy: none
+		sourceColumn: wheels_off_ts
+
+		annotation SummarizationSetBy = Automatic
+
+	column wheels_on_ts
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 4b214d64-d37b-43f0-a407-f97bf378bbe8
+		sourceLineageTag: wheels_on_ts
+		summarizeBy: none
+		sourceColumn: wheels_on_ts
+
+		annotation SummarizationSetBy = Automatic
+
+	column crs_arr_ts
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: dafd2065-a609-4cb8-b1aa-663e2573f448
+		sourceLineageTag: crs_arr_ts
+		summarizeBy: none
+		sourceColumn: crs_arr_ts
+
+		annotation SummarizationSetBy = Automatic
+
+	column arr_ts
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: aee75c12-546f-479f-9954-3816ad0873da
+		sourceLineageTag: arr_ts
+		summarizeBy: none
+		sourceColumn: arr_ts
+
+		annotation SummarizationSetBy = Automatic
+
+	column crs_dep_time_hhmm
+		dataType: int64
+		formatString: 0
+		lineageTag: b4ed7933-8f47-417d-aef3-9c3f32f74675
+		sourceLineageTag: crs_dep_time_hhmm
+		summarizeBy: sum
+		sourceColumn: crs_dep_time_hhmm
+
+		annotation SummarizationSetBy = Automatic
+
+	column dep_time_block
+		dataType: string
+		lineageTag: 69df4023-4d62-43ec-a711-05644b93055e
+		sourceLineageTag: dep_time_block
+		summarizeBy: none
+		sourceColumn: dep_time_block
+
+		annotation SummarizationSetBy = Automatic
+
+	column arr_time_block
+		dataType: string
+		lineageTag: 42adb81e-5ae3-46a9-b79d-cd32543dee6d
+		sourceLineageTag: arr_time_block
+		summarizeBy: none
+		sourceColumn: arr_time_block
+
+		annotation SummarizationSetBy = Automatic
+
+	column dep_delay
+		dataType: double
+		lineageTag: 2783ccb4-5327-4a88-9670-a09d364853c1
+		sourceLineageTag: dep_delay
+		summarizeBy: sum
+		sourceColumn: dep_delay
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column dep_delay_minutes
+		dataType: double
+		lineageTag: d341553f-3a1d-4d31-89f9-26af1f34b953
+		sourceLineageTag: dep_delay_minutes
+		summarizeBy: sum
+		sourceColumn: dep_delay_minutes
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column dep_del15
+		dataType: double
+		lineageTag: 8289fc12-a98b-4b84-8056-8d512559d638
+		sourceLineageTag: dep_del15
+		summarizeBy: sum
+		sourceColumn: dep_del15
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column taxi_out
+		dataType: double
+		lineageTag: 5f22622e-adc8-48b8-a693-13d30d93c147
+		sourceLineageTag: taxi_out
+		summarizeBy: sum
+		sourceColumn: taxi_out
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column taxi_in
+		dataType: double
+		lineageTag: ef854e03-6bce-4fe9-9bc2-191c06b5158b
+		sourceLineageTag: taxi_in
+		summarizeBy: sum
+		sourceColumn: taxi_in
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column arr_delay
+		dataType: double
+		lineageTag: 4019efda-9608-4ac6-8178-a64faa48654d
+		sourceLineageTag: arr_delay
+		summarizeBy: sum
+		sourceColumn: arr_delay
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column arr_delay_minutes
+		dataType: double
+		lineageTag: 86c85e55-fbab-4df3-ba2b-3638a80c0b44
+		sourceLineageTag: arr_delay_minutes
+		summarizeBy: sum
+		sourceColumn: arr_delay_minutes
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column arr_del15
+		dataType: double
+		lineageTag: 838958b0-0811-4b01-9925-63d93632585d
+		sourceLineageTag: arr_del15
+		summarizeBy: sum
+		sourceColumn: arr_del15
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column crs_elapsed_time
+		dataType: double
+		lineageTag: 93576cd7-deb0-4a4b-ab46-9f0ea4b2e598
+		sourceLineageTag: crs_elapsed_time
+		summarizeBy: sum
+		sourceColumn: crs_elapsed_time
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column actual_elapsed_time
+		dataType: double
+		lineageTag: 2058a396-cc32-4989-8ded-660341170cce
+		sourceLineageTag: actual_elapsed_time
+		summarizeBy: sum
+		sourceColumn: actual_elapsed_time
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column air_time
+		dataType: double
+		lineageTag: 9a1762c3-ff36-4bed-94a0-090dca3ec2c6
+		sourceLineageTag: air_time
+		summarizeBy: sum
+		sourceColumn: air_time
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column distance
+		dataType: double
+		lineageTag: b30e59f3-98c7-4060-953d-e06e7cdba8da
+		sourceLineageTag: distance
+		summarizeBy: sum
+		sourceColumn: distance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column cancelled
+		dataType: double
+		lineageTag: 9e06ee1d-45d8-4b54-9be4-502723265a6f
+		sourceLineageTag: cancelled
+		summarizeBy: sum
+		sourceColumn: cancelled
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column diverted
+		dataType: double
+		lineageTag: 2a42efe3-f73c-48de-a957-3e22e0dfc41a
+		sourceLineageTag: diverted
+		summarizeBy: sum
+		sourceColumn: diverted
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column div_airport_landings
+		dataType: double
+		lineageTag: fd5d0c89-aab1-488a-a0fe-6524fddc761a
+		sourceLineageTag: div_airport_landings
+		summarizeBy: sum
+		sourceColumn: div_airport_landings
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column _source_file
+		dataType: string
+		lineageTag: 28c9c8d6-6946-495b-a935-0567be24677e
+		sourceLineageTag: _source_file
+		summarizeBy: none
+		sourceColumn: _source_file
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_flight = entity
+		mode: directLake
+		source
+			entityName: fact_flight
+			expressionSource: 'DirectLake - lh_bts'
+

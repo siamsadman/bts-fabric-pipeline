@@ -1,0 +1,28 @@
+table dim_cancellation_code
+	lineageTag: c84e410e-6614-410a-bff7-ed7062749abd
+	sourceLineageTag: [dbo].[dim_cancellation_code]
+
+	column cancellation_code
+		dataType: string
+		lineageTag: 72114ac6-0224-4d8d-a000-572feb2a5730
+		sourceLineageTag: cancellation_code
+		summarizeBy: none
+		sourceColumn: cancellation_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column cancellation_reason
+		dataType: string
+		lineageTag: f97e0b85-bb18-4c57-a524-e6a703d3356a
+		sourceLineageTag: cancellation_reason
+		summarizeBy: none
+		sourceColumn: cancellation_reason
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_cancellation_code = entity
+		mode: directLake
+		source
+			entityName: dim_cancellation_code
+			expressionSource: 'DirectLake - lh_bts'
+

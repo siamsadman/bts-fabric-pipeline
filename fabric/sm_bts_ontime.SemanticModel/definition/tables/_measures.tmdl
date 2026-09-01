@@ -1,0 +1,135 @@
+table _measures
+	lineageTag: d9a3b5db-43a6-43a2-b5fd-9874ecc03173
+	sourceLineageTag: [dbo].[_measures]
+
+	measure Flights = COUNTROWS ( fact_flight )
+		formatString: 0
+		lineageTag: 29a52584-f37a-47a5-8856-800b8cd5febc
+
+		changedProperty = Name
+
+	measure 'Cancelled Flights' =
+			
+			CALCULATE ( [Flights], fact_flight[cancelled] = 1 )
+		formatString: 0
+		lineageTag: 91cbca9a-86ae-4f5e-8ac6-3f614d9eecbd
+
+		changedProperty = Name
+
+	measure 'Cancellation Rate' =
+			
+			DIVIDE ( [Cancelled Flights], [Flights] )
+		formatString: 0.0%;-0.0%;0.0%
+		lineageTag: d3b8ff2f-2035-42ba-9d04-196bc78b0b80
+
+		changedProperty = Name
+
+		changedProperty = FormatString
+
+	measure 'Diverted Flights' =
+			
+			CALCULATE ( [Flights], fact_flight[diverted] = 1 )
+		formatString: 0
+		lineageTag: 79b10d49-b2dc-4d05-a7b1-5751bd2f28f9
+
+		changedProperty = Name
+
+	measure 'Completed Flights' =
+			
+			CALCULATE ( [Flights], fact_flight[cancelled] = 0, fact_flight[diverted] = 0 )
+		formatString: 0
+		lineageTag: b296074b-bd30-426e-8d45-cfcb9c6fdfa6
+
+		changedProperty = Name
+
+	measure 'On Time Flights' =
+			
+			CALCULATE ( [Completed Flights], fact_flight[arr_del15] = 0 )
+		formatString: 0
+		lineageTag: 4936fd8a-dd9e-4780-ae7e-ec54ca8c90c5
+
+		changedProperty = Name
+
+	measure 'On Time Rate' =
+			
+			DIVIDE ( [On Time Flights], [Completed Flights] )
+		formatString: 0.0%;-0.0%;0.0%
+		lineageTag: bc7ab47f-054f-4715-9bd9-ee23211fa716
+
+		changedProperty = Name
+
+		changedProperty = FormatString
+
+	measure 'Delayed Flights' =
+			
+			CALCULATE ( [Completed Flights], fact_flight[arr_del15] = 1 )
+		formatString: 0
+		lineageTag: ba8e698e-67a0-4869-89a3-6de52bc1e1e8
+
+		changedProperty = Name
+
+	measure 'Avg Arrival Delay' =
+			
+			AVERAGE ( fact_flight[arr_delay_minutes] )
+		lineageTag: d2208b3b-2f0c-4d34-a571-3e741d030eb9
+
+		changedProperty = Name
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Avg Departure Delay' =
+			
+			AVERAGE ( fact_flight[dep_delay_minutes] )
+		lineageTag: dc12961b-b3f6-47c2-aba2-5a7934b82803
+
+		changedProperty = Name
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Arriving Flights' =
+			
+			CALCULATE (
+			    [Flights],
+			    USERELATIONSHIP ( dim_airport[airport_id], fact_flight[dest_airport_id] )
+			)
+		formatString: 0
+		lineageTag: 55ee08fd-4f6a-4c99-8cba-884ab884b9b5
+
+		changedProperty = Name
+
+	measure 'Delay Minutes' =
+			
+			SUM ( fact_delay_attribution[delay_minutes] )
+		lineageTag: 318150a6-02c8-4065-ab0d-7030cc9e5ef1
+
+		changedProperty = Name
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Attributed Delay Events' =
+			
+			COUNTROWS ( fact_delay_attribution )
+		formatString: 0
+		lineageTag: 94e133c8-feb9-4415-8965-babacd8286d2
+
+		changedProperty = Name
+
+	column dummy
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 7531afb9-961e-417b-94ea-1df6e9e9f85c
+		sourceLineageTag: dummy
+		summarizeBy: sum
+		sourceColumn: dummy
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _measures = entity
+		mode: directLake
+		source
+			entityName: _measures
+			expressionSource: 'DirectLake - lh_bts'
+

@@ -1,0 +1,38 @@
+table dim_delay_cause
+	lineageTag: b42fc7d7-1453-4d90-9bda-63377e5b11f3
+	sourceLineageTag: [dbo].[dim_delay_cause]
+
+	column delay_cause_key
+		dataType: string
+		lineageTag: 0a1f6a0e-3611-4dcf-b612-8bc18403f94f
+		sourceLineageTag: delay_cause_key
+		summarizeBy: none
+		sourceColumn: delay_cause_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column delay_cause_name
+		dataType: string
+		lineageTag: 90f6ea90-c1ef-442b-bae7-2790285192ea
+		sourceLineageTag: delay_cause_name
+		summarizeBy: none
+		sourceColumn: delay_cause_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column sort_order
+		dataType: int64
+		formatString: 0
+		lineageTag: 56abf42d-7ec2-448b-87a9-b5c2dae2ebbe
+		sourceLineageTag: sort_order
+		summarizeBy: none
+		sourceColumn: sort_order
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_delay_cause = entity
+		mode: directLake
+		source
+			entityName: dim_delay_cause
+			expressionSource: 'DirectLake - lh_bts'
+

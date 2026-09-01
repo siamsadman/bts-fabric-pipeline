@@ -1,0 +1,66 @@
+table dim_airport
+	lineageTag: acc1578f-db30-44dd-8f43-4fef763f13fa
+	sourceLineageTag: [dbo].[dim_airport]
+
+	column airport_id
+		dataType: int64
+		formatString: 0
+		lineageTag: e79c6881-ecd0-469d-9d8c-a7363e7ed763
+		sourceLineageTag: airport_id
+		summarizeBy: none
+		sourceColumn: airport_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column airport_code
+		dataType: string
+		lineageTag: d00b6d61-76aa-47e1-8e23-dd59727c1fab
+		sourceLineageTag: airport_code
+		summarizeBy: none
+		sourceColumn: airport_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column city_name
+		dataType: string
+		lineageTag: 68b4246c-a404-4991-92bf-61537c4d5d36
+		sourceLineageTag: city_name
+		summarizeBy: none
+		sourceColumn: city_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column city_market_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 18778c39-e450-4f9c-bd63-e1f268a34688
+		sourceLineageTag: city_market_id
+		summarizeBy: none
+		sourceColumn: city_market_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column state_abbr
+		dataType: string
+		lineageTag: e7b72593-6609-464d-89dd-25678ec072de
+		sourceLineageTag: state_abbr
+		summarizeBy: none
+		sourceColumn: state_abbr
+
+		annotation SummarizationSetBy = Automatic
+
+	column state_name
+		dataType: string
+		lineageTag: f686d717-607e-433d-8bf9-f008f69b6237
+		sourceLineageTag: state_name
+		summarizeBy: none
+		sourceColumn: state_name
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_airport = entity
+		mode: directLake
+		source
+			entityName: dim_airport
+			expressionSource: 'DirectLake - lh_bts'
+

@@ -1,0 +1,47 @@
+table dim_carrier
+	lineageTag: 6b13c193-ddce-48b8-959b-211c0e3c1ff6
+	sourceLineageTag: [dbo].[dim_carrier]
+
+	column carrier_code
+		dataType: string
+		lineageTag: 9fb474fa-51bc-4f41-ab65-5368b9b02540
+		sourceLineageTag: carrier_code
+		summarizeBy: none
+		sourceColumn: carrier_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column carrier_dot_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 6b3fc66e-4721-47e6-82dc-7eb466859328
+		sourceLineageTag: carrier_dot_id
+		summarizeBy: none
+		sourceColumn: carrier_dot_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column carrier_iata_code
+		dataType: string
+		lineageTag: 1d9a8344-f402-4e6c-90f0-e3aa5329786e
+		sourceLineageTag: carrier_iata_code
+		summarizeBy: none
+		sourceColumn: carrier_iata_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column carrier_name
+		dataType: string
+		lineageTag: fedd4497-cf3f-442f-a719-6eb7eb29b08c
+		sourceLineageTag: carrier_name
+		summarizeBy: none
+		sourceColumn: carrier_name
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_carrier = entity
+		mode: directLake
+		source
+			entityName: dim_carrier
+			expressionSource: 'DirectLake - lh_bts'
+

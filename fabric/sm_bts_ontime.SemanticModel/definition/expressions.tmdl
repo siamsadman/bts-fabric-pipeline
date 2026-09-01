@@ -1,0 +1,11 @@
+expression 'DirectLake - lh_bts' =
+		let
+		    Source = AzureStorage.DataLake("https://onelake.dfs.fabric.microsoft.com/befb4d14-5716-492d-adaf-21128aebf048/9f302880-d9e8-42a8-9bc2-de27b5220614", [HierarchicalNavigation=true])
+		in
+		    Source
+	lineageTag: d4d09341-7bfc-4a9f-8dc9-b27d4393fb02
+
+	annotation PBI_IncludeFutureArtifacts = False
+
+	annotation PBI_RemovedChildren = [{"remoteItemId":{"analysisServicesObject":{"sourceName":null,"sourceLineageTag":"[dbo].[silver_flights]"}},"objectType":"Table"},{"remoteItemId":{"analysisServicesObject":{"sourceName":null,"sourceLineageTag":"[dbo].[load_watermark]"}},"objectType":"Table"},{"remoteItemId":{"analysisServicesObject":{"sourceName":null,"sourceLineageTag":"[dbo].[bronze_flights]"}},"objectType":"Table"}]
+

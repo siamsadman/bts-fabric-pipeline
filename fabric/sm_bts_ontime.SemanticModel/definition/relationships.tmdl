@@ -1,0 +1,36 @@
+relationship 211378b0-e78e-4800-c397-cb01f598dd4f
+	relyOnReferentialIntegrity
+	fromColumn: fact_flight.date_key
+	toColumn: dim_date.date_key
+
+relationship 14e8e779-4002-5624-e749-027912ccc089
+	relyOnReferentialIntegrity
+	fromColumn: fact_flight.carrier_code
+	toColumn: dim_carrier.carrier_code
+
+relationship 5b296286-81ab-9de0-985b-b10edc87a649
+	relyOnReferentialIntegrity
+	fromColumn: fact_flight.cancellation_code
+	toColumn: dim_cancellation_code.cancellation_code
+
+relationship b546e227-2842-008a-15e9-218754cebd7a
+	relyOnReferentialIntegrity
+	fromColumn: fact_flight.origin_airport_id
+	toColumn: dim_airport.airport_id
+
+relationship a2c80ef9-9096-aa47-8043-42fd0e685d0f
+	isActive: false
+	relyOnReferentialIntegrity
+	fromColumn: fact_flight.dest_airport_id
+	toColumn: dim_airport.airport_id
+
+relationship 49f6256f-764b-8622-2607-15b20425e511
+	relyOnReferentialIntegrity
+	fromColumn: fact_delay_attribution.date_key
+	toColumn: dim_date.date_key
+
+relationship 2347deac-e458-c20e-0efa-ba7931f6f4c0
+	relyOnReferentialIntegrity
+	fromColumn: fact_delay_attribution.delay_cause_key
+	toColumn: dim_delay_cause.delay_cause_key
+
