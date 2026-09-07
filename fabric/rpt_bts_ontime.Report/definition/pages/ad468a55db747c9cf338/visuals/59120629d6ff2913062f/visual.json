@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "59120629d6ff2913062f",
   "position": {
-    "x": 1071.6666666666667,
-    "y": 585,
-    "z": 3001,
-    "height": 435,
-    "width": 771.66666666666674,
-    "tabOrder": 3001
+    "x": 1088,
+    "y": 608,
+    "z": 4000,
+    "height": 368,
+    "width": 800.00000000000011,
+    "tabOrder": 3000
   },
   "visual": {
     "visualType": "barChart",
@@ -78,18 +78,13 @@
         "sort": [
           {
             "field": {
-              "Aggregation": {
+              "Measure": {
                 "Expression": {
-                  "Column": {
-                    "Expression": {
-                      "SourceRef": {
-                        "Entity": "dim_delay_cause"
-                      }
-                    },
-                    "Property": "sort_order"
+                  "SourceRef": {
+                    "Entity": "_measures"
                   }
                 },
-                "Function": 1
+                "Property": "Delay Minutes"
               }
             },
             "direction": "Ascending"
@@ -105,6 +100,17 @@
               "expr": {
                 "Literal": {
                   "Value": "10D"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#2C3691'"
+                    }
+                  }
                 }
               }
             }
@@ -132,6 +138,27 @@
                   }
                 }
               }
+            },
+            "shadowSpread": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "shadowBlur": {
+              "expr": {
+                "Literal": {
+                  "Value": "4D"
+                }
+              }
+            },
+            "angle": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
             }
           }
         }
@@ -155,7 +182,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'by Delay Casue'"
+                  "Value": "'by Delay Cause'"
                 }
               }
             }

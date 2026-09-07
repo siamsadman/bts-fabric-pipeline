@@ -50,6 +50,37 @@
           "type": "BaseTheme"
         }
       ]
+    },
+    {
+      "name": "RegisteredResources",
+      "type": "RegisteredResources",
+      "items": [
+        {
+          "name": "fa_plane9447411655451056.png",
+          "path": "fa_plane9447411655451056.png",
+          "type": "Image"
+        },
+        {
+          "name": "fa7-solid_plane-arrival35937995129787115.png",
+          "path": "fa7-solid_plane-arrival35937995129787115.png",
+          "type": "Image"
+        },
+        {
+          "name": "fa7-solid_plane-circle-check2849514509805694.png",
+          "path": "fa7-solid_plane-circle-check2849514509805694.png",
+          "type": "Image"
+        },
+        {
+          "name": "fa7-solid_plane-circle-xmark5493072639293339.png",
+          "path": "fa7-solid_plane-circle-xmark5493072639293339.png",
+          "type": "Image"
+        },
+        {
+          "name": "Screenshot_2026-09-02_1105388600214251414784.png",
+          "path": "Screenshot_2026-09-02_1105388600214251414784.png",
+          "type": "Image"
+        }
+      ]
     }
   ],
   "settings": {

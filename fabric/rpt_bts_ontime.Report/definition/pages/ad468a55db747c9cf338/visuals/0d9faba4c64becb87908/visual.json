@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "0d9faba4c64becb87908",
   "position": {
-    "x": 273.33333333333337,
-    "y": 585,
+    "x": 304,
+    "y": 608,
     "z": 3000,
-    "height": 435,
-    "width": 771.66666666666674,
-    "tabOrder": 3000
+    "height": 368,
+    "width": 768,
+    "tabOrder": 2000
   },
   "visual": {
     "visualType": "barChart",
@@ -81,6 +81,17 @@
                   "Value": "10D"
                 }
               }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#2C3691'"
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -100,10 +111,31 @@
                 "color": {
                   "expr": {
                     "ThemeDataColor": {
-                      "ColorId": 2,
+                      "ColorId": 1,
                       "Percent": 0
                     }
                   }
+                }
+              }
+            },
+            "shadowSpread": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "shadowBlur": {
+              "expr": {
+                "Literal": {
+                  "Value": "4D"
+                }
+              }
+            },
+            "angle": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
                 }
               }
             }
