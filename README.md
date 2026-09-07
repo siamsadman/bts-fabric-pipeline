@@ -48,18 +48,18 @@ Layer separation is by table-name prefix within a single lakehouse. Three separa
 
 ```mermaid
 flowchart LR
+    subgraph backfill["pl_bts_backfill"]
+        FE["ForEach<br/>sequential"] --> INV["Invoke pipeline<br/>per period"]
+    end
+
     subgraph ingest["pl_bts_ingest — one period"]
         direction LR
-        A["01 Landing<br/>Fetch"] -->|on success| B["02 Bronze<br/>Ingest"]
-        B -->|on success| C["03 Silver<br/>Transform"]
-        C -->|on success| D["04 Gold<br/>Build"]
+        A["01 Landing<br/>Fetch"] -->|success| B["02 Bronze<br/>Ingest"]
+        B -->|success| C["03 Silver<br/>Transform"]
+        C -->|success| D["04 Gold<br/>Build"]
     end
 
-    subgraph backfill["pl_bts_backfill"]
-        FE["ForEach<br/>sequential"] --> INV["Invoke<br/>pl_bts_ingest"]
-    end
-
-    INV -.->|@item| ingest
+    INV -.-> A
 ```
 
 Activities are chained **on success**, not on completion. On-completion would let a failed landing step run bronze anyway, which is how partial data gets written and reported as a success.
