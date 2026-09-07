@@ -341,7 +341,6 @@ A subsequent attempt at July 2026 returned HTTP 404: BTS had not yet published i
 │   ├── sm_bts_ontime.SemanticModel/
 │   └── rpt_bts_ontime.Report/
 ├── docs/                         Build evidence and decisions record
-│   └── handover.md
 └── scripts/
     └── Verify-BtsZips.ps1        Source archive validation
 ```
@@ -351,8 +350,6 @@ Notebooks sync as readable `.py` files and the semantic model as TMDL — the tr
 Git integration was connected to an empty workspace **before any items were created**, so the commit history tracks the build rather than arriving as one bulk import:
 
 ![Git integration settings](docs/02-git-integration-settings.png)
-
-`docs/handover.md` is the working decisions record kept during the build: what was chosen, what was rejected, and what was measured.
 
 ---
 
