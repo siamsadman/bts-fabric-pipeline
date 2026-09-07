@@ -271,7 +271,7 @@ Fabric trial capacity, **F4 (4 CU)**, East Asia.
 | **Full pipeline, one period** | **~6.5 min** |
 | **Full backfill, 71 periods** | **7 h 6 min** |
 
-The backfill ran unattended with **zero failures**. Retries were configured on each activity (two attempts, 120-second interval) but never fired.
+The orchestrated backfill covered 71 periods; six had already been loaded during development and were not re-run, and June 2026 was held back for the incremental demo — 71 + 6 + 1 = 78. It ran unattended with **zero failures**. Retries were configured on each activity (two attempts, 120-second interval) but never fired.
 
 ![Backfill run: 71 periods, 7h 6m, zero failures](docs/08-backfill-71-periods-7h06m.png)
 
