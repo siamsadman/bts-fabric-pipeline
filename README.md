@@ -6,7 +6,9 @@ A medallion-architecture data engineering project in Microsoft Fabric, built ove
 
 Demonstrates lakehouse architecture, PySpark transformation, incremental loading with watermark-driven `MERGE`, Data Factory orchestration, and a Direct Lake semantic model — with validation gates at every layer boundary.
 
-> **Note on reproducibility.** Fabric's Git integration syncs *item definitions*, not table contents. Cloning this repo gives you the notebooks, pipelines and semantic model, which will rebuild the model in any Fabric workspace, but the tables themselves live in OneLake. Screenshots in [`docs/`](docs/) are the evidence of the running system.
+![Report page](docs/14-report-page.png)
+
+> **Note on reproducibility.** Fabric's Git integration syncs *item definitions*, not table contents. Cloning this repo gives you the notebooks, pipelines and semantic model, which will rebuild the model in any Fabric workspace, but the tables themselves live in OneLake. The screenshots in [`docs/`](docs/) are the evidence of the running system, captured while the trial capacity was live.
 
 ---
 
@@ -109,6 +111,14 @@ Reads the CSV into Delta with an **explicit schema**, adds `_ingest_timestamp` a
 
 Cleans, types, and merges one period. 109 source fields reduced to 56 using an explicit **keep-list rather than a drop-list**, so a new column in a future BTS vintage is ignored by default rather than flowing through uninvited. Names normalise to `snake_case` here, which also handles the casing variance between download vintages.
 
+Bronze preserves the source contract — 111 columns, BTS PascalCase, `hhmm` integers untouched:
+
+![Bronze table](docs/05-bronze-table-111-columns.png)
+
+Silver is the same data, typed and named for the model:
+
+![Silver table](docs/06-silver-table-56-columns.png)
+
 #### Timestamp derivation
 
 The substance of this layer, and the fiddliest transform in the project.
@@ -139,6 +149,8 @@ Note the `2400` rule **differs between the two functions**, deliberately: on the
 The `2400` bug passed check 1 at 100% and was caught only by check 2. One passing check is not validation.
 
 The `raise` matters: when the pipeline runs unattended, a bad month must fail the run rather than quietly write wrong data.
+
+![Silver validation gates](docs/13-silver-validation-gates.png)
 
 #### Incremental load
 
@@ -225,6 +237,8 @@ Every layer boundary has a check that fails the run rather than warning.
 | Every `arr_del15` flight appears in attribution | `nb_04` | 82,285 = 82,285 (January 2020) |
 | Referential integrity, five relationships | `nb_04` | 0 orphans across 41.2M rows |
 
+![Referential integrity across the full dataset](docs/10-referential-integrity-full-dataset.png)
+
 ### Final row counts
 
 | Table | Rows |
@@ -242,6 +256,8 @@ Identical counts across bronze, silver and fact — no drift through the chain.
 
 At completion of the 77-period backfill these stood at 41,222,251 rows and 386 airports; the figures above include the subsequent incremental load of June 2026.
 
+![Row counts at backfill completion](docs/09-final-row-counts.png)
+
 ### Measured performance
 
 Fabric trial capacity, **F4 (4 CU)**, East Asia.
@@ -257,6 +273,8 @@ Fabric trial capacity, **F4 (4 CU)**, East Asia.
 
 The backfill ran unattended with **zero failures**. Retries were configured on each activity (two attempts, 120-second interval) but never fired.
 
+![Backfill run: 71 periods, 7h 6m, zero failures](docs/08-backfill-71-periods-7h06m.png)
+
 ### Incremental load, demonstrated
 
 June 2026 was deliberately held back from the backfill and loaded afterwards through the same single-period pipeline, unchanged:
@@ -268,7 +286,22 @@ June 2026 was deliberately held back from the backfill and loaded afterwards thr
 
 The delta is exactly 607,577 — June's row count as recorded in the watermark. No double-counting, no manual intervention.
 
-A subsequent attempt at July 2026 returned HTTP 404: BTS had not yet published it. `raise_for_status()` caught it, landing failed, and on-success chaining meant bronze, silver and gold never ran. No partial data, no false success.
+<table>
+<tr>
+<td width="50%"><img src="docs/11-watermark-before-incremental-77.png" alt="Watermark before: 77 periods"></td>
+<td width="50%"><img src="docs/12-watermark-after-incremental-78.png" alt="Watermark after: 78 periods"></td>
+</tr>
+<tr>
+<td align="center"><em>Before — 77 periods, 41,222,251 rows</em></td>
+<td align="center"><em>After — 78 periods, 41,829,828 rows</em></td>
+</tr>
+</table>
+
+### Failure path
+
+A subsequent attempt at July 2026 returned HTTP 404: BTS had not yet published it. `raise_for_status()` caught it, landing failed, and on-success chaining meant bronze, silver and gold never ran — they show as unstarted rather than skipped or failed. No partial data, no false success.
+
+![Pipeline failure on an unpublished period](docs/15-pipeline-failure-unpublished-period.png)
 
 ---
 
@@ -314,6 +347,10 @@ A subsequent attempt at July 2026 returned HTTP 404: BTS had not yet published i
 ```
 
 Notebooks sync as readable `.py` files and the semantic model as TMDL — the transformation logic, relationships and DAX can be read directly on GitHub without a Fabric workspace.
+
+Git integration was connected to an empty workspace **before any items were created**, so the commit history tracks the build rather than arriving as one bulk import:
+
+![Git integration settings](docs/02-git-integration-settings.png)
 
 `docs/handover.md` is the working decisions record kept during the build: what was chosen, what was rejected, and what was measured.
 
